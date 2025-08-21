@@ -12,7 +12,8 @@ for (let y = 0; y < height; y++) {
       x,
       y,
       occupied: false,
-      color: null
+      color: null,
+      pieceId: null
     });
   }
 }
@@ -74,12 +75,57 @@ function onDrop(targetCell) {
         if (boardCell) {
           boardCell.occupied = true;
           boardCell.color = draggedPiece.color;
+          boardCell.pieceId = draggedPiece.name;
         }
       }
     });
   });
 
   draggedPiece = null;
+  cells = [...cells];
+}
+
+function reDrag(cell){
+  if (!cell.pieceId) return;
+
+  const pieceCells = cells.filter(c => c.pieceId === cell.pieceId);
+
+  pieceCells.forEach(c => { c.occupied = false; c.color = null; c.pieceId = null; });
+  cells = [...cells];
+
+    const ghost = document.createElement("div");
+  ghost.style.display = "inline-block";
+  ghost.style.padding = "4px";
+  ghost.style.background = "transparent";
+
+  const minX = Math.min(...pieceCells.map(c => c.x));
+  const minY = Math.min(...pieceCells.map(c => c.y));
+
+  const shapeWidth = Math.max(...pieceCells.map(c => c.x)) - minX + 1;
+  const shapeHeight = Math.max(...pieceCells.map(c => c.y)) - minY + 1;
+
+  const shape = Array.from({ length: shapeHeight }, () =>
+    Array(shapeWidth).fill(0)
+  );
+
+  pieceCells.forEach(c => {
+    shape[c.y - minY][c.x - minX] = 1;
+  });
+
+  draggedPiece = {
+    name: cell.pieceId,
+    color: pieceCells[0].color,
+    shape
+  };
+
+  // clear piece from board
+  pieceCells.forEach(c => {
+    c.occupied = false;
+    c.color = null;
+    c.pieceId = null;
+  });
+
+  // refresh board
   cells = [...cells];
 }
 </script>
@@ -92,6 +138,8 @@ function onDrop(targetCell) {
       class="socket" 
       role="gridcell"
       tabindex="0"
+      draggable={cell.occupied}
+      on:dragstart={() => reDrag(cell)}
       on:dragover={onDragOver} 
       on:drop={() => onDrop(cell)}>
       {#if cell.occupied}
