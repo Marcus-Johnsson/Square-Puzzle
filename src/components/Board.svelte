@@ -17,53 +17,42 @@ for (let y = 0; y < height; y++) {
     });
   }
 }
-
   let draggedPiece = null;
-
-  function onDragStart(event, piece) {
-    draggedPiece = piece;
-    }
-
-    function onDragEnd(event) {
-    event.target.classList.remove("dragging");
-  }
-
-
 
   function onDragOver(event) {
     event.preventDefault();}
 
-  function findPivot(shape) {
-  for (let y = 0; y < shape.length; y++) {
-    for (let x = 0; x < shape[y].length; x++) {
-      if (shape[y][x] === 2) {
-        return { pivotX: x, pivotY: y };
-      }
-    }
-  }
-  return { pivotX: 0, pivotY: 0 }; // fallback
+function startDragging(name, color, shape, pivotX = 0, pivotY = 0, clearCells = []) {
+  draggedPiece = {
+    name,
+    color,
+    shape,
+    pivotX,
+    pivotY
+  };
+
+  clearCells.forEach(c => {
+    c.occupied = false;
+    c.color = null;
+    c.pieceId = null;
+  });
+
+  cells = [...cells]; 
 }
 
-function rotatePiece(piece) {
-  const newShape = piece.shape[0].map((_, index) =>
-    piece.shape.map(row => row[index]).reverse()
-  );
-
-  // find new pivot position
-  let newPivot = findPivot(newShape);
-
-  return { ...piece, shape: newShape, pivot: newPivot };
-}
-
-  function flipPiece(piece) {
-    const newShape = piece.shape.map(row => row.slice().reverse());
-    return { ...piece, shape: newShape };
-  }
 function onDrop(targetCell) {
   if (!draggedPiece) return;
 
-  const { pivotX, pivotY } = findPivot(draggedPiece.shape);
+  const { pivotX, pivotY, name } = draggedPiece;
   const { x: baseX, y: baseY } = targetCell;
+
+  cells.forEach(c => {
+    if (c.pieceId === name) {
+      c.occupied = false;
+      c.color = null;
+      c.pieceId = null;
+    }
+  });
 
   draggedPiece.shape.forEach((row, rowIndex) => {
     row.forEach((val, colIndex) => {
@@ -75,58 +64,41 @@ function onDrop(targetCell) {
         if (boardCell) {
           boardCell.occupied = true;
           boardCell.color = draggedPiece.color;
-          boardCell.pieceId = draggedPiece.name;
+          boardCell.pieceId = name;
         }
       }
     });
   });
 
   draggedPiece = null;
-  cells = [...cells];
+  
+  cells = [...cells]; // refresh board
 }
 
-function reDrag(cell){
+
+function onReDrag(cell) {
   if (!cell.pieceId) return;
 
   const pieceCells = cells.filter(c => c.pieceId === cell.pieceId);
 
-  pieceCells.forEach(c => { c.occupied = false; c.color = null; c.pieceId = null; });
-  cells = [...cells];
-
-    const ghost = document.createElement("div");
-  ghost.style.display = "inline-block";
-  ghost.style.padding = "4px";
-  ghost.style.background = "transparent";
-
   const minX = Math.min(...pieceCells.map(c => c.x));
   const minY = Math.min(...pieceCells.map(c => c.y));
+  const maxX = Math.max(...pieceCells.map(c => c.x));
+  const maxY = Math.max(...pieceCells.map(c => c.y));
 
-  const shapeWidth = Math.max(...pieceCells.map(c => c.x)) - minX + 1;
-  const shapeHeight = Math.max(...pieceCells.map(c => c.y)) - minY + 1;
+  const shape = [];
+  for (let y = minY; y <= maxY; y++) {
+    const row = [];
+    for (let x = minX; x <= maxX; x++) {
+      row.push(pieceCells.some(c => c.x === x && c.y === y) ? 1 : 0);
+    }
+    shape.push(row);
+  }
 
-  const shape = Array.from({ length: shapeHeight }, () =>
-    Array(shapeWidth).fill(0)
-  );
+  const pivotX = cell.x - minX;
+  const pivotY = cell.y - minY;
 
-  pieceCells.forEach(c => {
-    shape[c.y - minY][c.x - minX] = 1;
-  });
-
-  draggedPiece = {
-    name: cell.pieceId,
-    color: pieceCells[0].color,
-    shape
-  };
-
-  // clear piece from board
-  pieceCells.forEach(c => {
-    c.occupied = false;
-    c.color = null;
-    c.pieceId = null;
-  });
-
-  // refresh board
-  cells = [...cells];
+  startDragging(cell.pieceId, pieceCells[0].color, shape, pivotX, pivotY, pieceCells);
 }
 </script>
 
@@ -139,7 +111,7 @@ function reDrag(cell){
       role="gridcell"
       tabindex="0"
       draggable={cell.occupied}
-      on:dragstart={() => reDrag(cell)}
+      on:dragstart={() => onReDrag(cell)}
       on:dragover={onDragOver} 
       on:drop={() => onDrop(cell)}>
       {#if cell.occupied}
@@ -155,16 +127,29 @@ function reDrag(cell){
 <div class="pieces">
   {#each allPieces as piece}
     <div class="piece"
-        draggable="true"
-        role="button"
-        tabindex="0"
-        on:dragstart={(event) => onDragStart(event,piece)}
-        on:dragend={onDragEnd}
-      >
-      {#each piece.shape as row}
+      draggable="true"
+      role="button"
+      tabindex="0">
+      
+      {#each piece.shape as row, rowIndex}
         <div class="row">
-          {#each row as cell}
-            <div class="cell {cell ? 'filled' : ''}" style="background:{cell ? piece.color : 'transparent'}"></div>
+          {#each row as cell, colIndex}
+            <div 
+              role="button"
+              tabindex="0"
+              draggable="true"
+              class="cell {cell ? 'filled' : ''}" 
+              style="background:{cell ? piece.color : 'transparent'}"
+              on:dragstart={() => startDragging(
+                piece.name,
+                piece.color,
+                piece.shape,
+                colIndex,   // pivotX
+                rowIndex    // pivotY
+
+                
+              )}>
+            </div>
           {/each}
         </div>
       {/each}
@@ -172,7 +157,9 @@ function reDrag(cell){
   {/each}
 </div>
 
+
 <style>
+
   .board {
     display: grid;
     gap: 2px;
@@ -190,9 +177,9 @@ function reDrag(cell){
     justify-content: center;
   }
     .placed {
-    width: 26px;
-    height: 26px;
-    border-radius: 4px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
   }
   .pieces {
     display: flex;
