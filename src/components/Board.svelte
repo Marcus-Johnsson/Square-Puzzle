@@ -100,16 +100,33 @@ function onReDrag(cell) {
 
   startDragging(cell.pieceId, pieceCells[0].color, shape, pivotX, pivotY, pieceCells);
 }
+
+  $: piecesOnBoard = allPieces.map(piece => ({
+    ...piece,
+    placed: cells.some(c => c.pieceId === piece.name)
+  }));
+
+  function removePiece(name) {
+    cells.forEach(c => {
+      if (c.pieceId === name) {
+        c.occupied = false;
+        c.color = null;
+        c.pieceId = null;
+      }
+    });
+    cells = [...cells]; // refresh board
+  }
 </script>
 
 
 <!-- Puzzle board -->
 <div class="board" style="grid-template-columns: repeat({width}, 30px);">
   {#each cells as cell}
+    <!-- svelte-ignore a11y_interactive_supports_focus -->
     <div 
       class="socket" 
       role="gridcell"
-      tabindex="0"
+      
       draggable={cell.occupied}
       on:dragstart={() => onReDrag(cell)}
       on:dragover={onDragOver} 
@@ -125,21 +142,26 @@ function onReDrag(cell) {
 
 <!-- piece tray -->
 <div class="pieces">
-  {#each allPieces as piece}
+  {#each piecesOnBoard as piece} 
+    <!-- svelte-ignore a11y_interactive_supports_focus -->
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
     <div class="piece"
-      draggable="true"
+      style="opacity: {piece.placed ? 0.3 : 1}; cursor: {piece.placed ? 'pointer' : 'grab'}"
       role="button"
-      tabindex="0">
+      on:click={() => piece.placed && removePiece(piece.name)}>
+
       
       {#each piece.shape as row, rowIndex}
+        
         <div class="row">
           {#each row as cell, colIndex}
             <div 
               role="button"
-              tabindex="0"
-              draggable="true"
+              draggable={!piece.placed}
               class="cell {cell ? 'filled' : ''}" 
-              style="background:{cell ? piece.color : 'transparent'}"
+              style="
+                background: {cell ? piece.color : 'transparent'};                cursor: {piece.placed ? 'pointer' : 'grab'};"
+
               on:dragstart={() => startDragging(
                 piece.name,
                 piece.color,
