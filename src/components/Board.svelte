@@ -353,7 +353,9 @@
   .board {
     display: grid;
     gap: 2px;
-    margin-bottom: 20px;
+    margin: 0 auto 20px auto;
+    justify-content: center;
+    width: fit-content;
   }
 
   .socket {
