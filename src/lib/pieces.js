@@ -39,7 +39,8 @@ export const allPieces = [
     name: "longdentshape",
     color: "yellow",
     shape: [
-      
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
       [0, 1, 0, 0],
       [1, 1, 1, 1]
     ]
@@ -48,6 +49,8 @@ export const allPieces = [
     name: "longLshape",
     color: "red",
     shape: [
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
       [1, 0, 0, 0],
       [1, 1, 1, 1]
     ]
@@ -56,6 +59,8 @@ export const allPieces = [
     name: "shorterLshape",
     color: "darkblue",
     shape: [
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
       [1, 0, 0, 0],
       [1, 1, 1, 0]
     ]
@@ -64,6 +69,8 @@ export const allPieces = [
     name: "fork",
     color: "pink",
     shape: [
+      [0, 0, 0, 0],   
+      [0, 0, 0, 0],
       [1, 1, 0, 0],
       [0, 1, 1, 1]
     ]
@@ -72,7 +79,7 @@ export const allPieces = [
     name: "cornershape",
     color: "lightblue",
     shape: [
-      [1  ],
+      [1, 0 ],
       [1, 1]
     ]
   },
