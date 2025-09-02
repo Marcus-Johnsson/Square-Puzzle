@@ -1,6 +1,6 @@
 <script>
   import { allPieces } from "../lib/pieces";
-
+  import {tick} from "svelte";
   export let width;
   export let height;
 
@@ -18,6 +18,8 @@
     }
   }
 
+  let seconds = 0;
+  let interval;
   let draggedPiece = null;
   let pieceRotations = {}; // Track rotation state for each piece
   let pieceFlipped = {}; // Track flip state for each piece
@@ -26,7 +28,25 @@
   function onDragOver(event) {
     event.preventDefault();
   }
+let wasEmpty = true;
 
+  $: {
+    const occupiedCount = cells.filter(c => c.occupied).length;
+    if (wasEmpty && occupiedCount > 0) {
+      // Board just went from empty to having a piece
+      timerInterval();
+      wasEmpty = false;
+    }
+    if (occupiedCount === 0) {
+      wasEmpty = true;
+    }
+  }
+  function timerInterval() {
+    if (interval) return; // Prevent multiple intervals
+    interval = setInterval(() => {
+      seconds += 1;
+    }, 1000);
+  }
   // Function to rotate a shape matrix 90 degrees clockwise
   function rotateShape(shape) {
     const rows = shape.length;
@@ -191,6 +211,7 @@
           }
         });
       });
+      
     } else {
       // Illegal move: restore original position if piece was previously on board
       if (originalCells.length > 0) {
@@ -205,6 +226,14 @@
 
     draggedPiece = null;
     cells = [...cells]; // refresh board
+    controlWin();
+  }
+
+  function controlWin(){
+    const allOccupied = cells.every(c => c.occupied);
+    if (allOccupied) {
+      alert("Congratulations! You've completed the puzzle!");
+    }
   }
 
   function onReDrag(cell) {
@@ -252,26 +281,46 @@
     });
     cells = [...cells]; // refresh board
   }
+
+  function resetPuzzle() {
+    cells.forEach(c => {
+      c.occupied = false;
+      c.color = null;
+      c.pieceId = null;
+    });
+    cells = [...cells]; // refresh board
+    seconds = 0;
+    clearInterval(interval);
+    interval = null;
+    pieceRotations = {};
+    pieceFlipped = {};
+    selectedPiece = null;
+  }
 </script>
 
 <!-- Puzzle board -->
-<div class="board" style="grid-template-columns: repeat({width}, 30px);">
-  {#each cells as cell}
-    <!-- svelte-ignore a11y_interactive_supports_focus -->
-    <div 
-      class="socket" 
-      role="gridcell"
-      draggable={cell.occupied}
-      on:dragstart={() => onReDrag(cell)}
-      on:dragover={onDragOver} 
-      on:drop={() => onDrop(cell)}>
-      {#if cell.occupied}
-        <div class="placed" style="background:{cell.color}"></div>
+  <div class="game-container" style="">
+    <div class="board" style="grid-template-columns: repeat({width}, 30px);">
+      {#each cells as cell}
+        <!-- svelte-ignore a11y_interactive_supports_focus -->
+      <div 
+        class="socket" 
+        role="gridcell"
+        draggable={cell.occupied}
+        on:dragstart={() => onReDrag(cell)}
+        on:dragover={onDragOver} 
+        on:drop={() => onDrop(cell)}>
+        {#if cell.occupied}
+      <div class="placed" style="background:{cell.color}"></div>
       {/if}
+      </div>
+    {/each}
+  </div>
+    <div style="text-align:center;color:white">
+      Time: {Math.floor(seconds / 60)}:{(seconds % 60).toString().padStart(2, '0')}
     </div>
-  {/each}
+    <button style="color:white;background:red"on:click={() => resetPuzzle()}> Reset</button>
 </div>
-
 <hr />
 
 <!-- Game area with pieces and controls -->
@@ -290,8 +339,9 @@
         {#each transformedShape as row, rowIndex}
           <div class="row">
             {#each row as cell, colIndex}
+              <!-- svelte-ignore a11y_no_static_element_interactions -->
               <div 
-                draggable={!piece.placed && selectedPiece !== piece.name}
+                draggable={!piece.placed}
                 class="cell {cell ? 'filled' : ''}" 
                 style="background: {cell ? piece.color : 'transparent'};"
                 on:dragstart={() => startDragging(
