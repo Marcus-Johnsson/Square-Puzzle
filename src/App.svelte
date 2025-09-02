@@ -1,6 +1,6 @@
 <script>
   import Board from "./components/Board.svelte";
-
+  
     let intructionVisible = false;
   function toggleInstruction() {
     intructionVisible = !intructionVisible;

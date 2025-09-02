@@ -1,6 +1,6 @@
 <script>
   import { allPieces } from "../lib/pieces";
-  import {tick} from "svelte";
+  import {tick} from "svelte";    
   export let width;
   export let height;
 
@@ -221,18 +221,21 @@ let wasEmpty = true;
           c.pieceId = name;
         });
       }
-      // If it was from tray (originalCells empty), piece just returns to tray
     }
 
     draggedPiece = null;
     cells = [...cells]; // refresh board
     controlWin();
+
   }
 
   function controlWin(){
     const allOccupied = cells.every(c => c.occupied);
     if (allOccupied) {
-      alert("Congratulations! You've completed the puzzle!");
+
+      setTimeout(()=>{
+       alert("Congratulations! You've completed the puzzle!")
+      }, 1000);
     }
   }
 
