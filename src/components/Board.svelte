@@ -340,7 +340,7 @@ let wasEmpty = true;
         {#each transformedShape as row, rowIndex}
           <div class="row">
             {#each row as cell, colIndex}
-              <!-- svelte-ignore a11y_no_static_element_interactions -->
+            <!-- svelte-ignore a11y_no_static_element_interactions -->
               <div 
                 draggable={!piece.placed}
                 class="cell {cell ? 'filled' : ''}" 
@@ -453,7 +453,6 @@ let wasEmpty = true;
 
   .piece {
     cursor: pointer;
-    padding: 8px;
     border-radius: 8px;
     transition: all 0.2s ease;
   }
@@ -461,7 +460,11 @@ let wasEmpty = true;
   .piece:hover {
     background: rgba(255, 255, 255, 0.1);
   }
-
+  .cell.filled:hover {
+    box-shadow: 0 0 8px 2px #646cff;
+    outline: 2px solid #646cff;
+    z-index: 2;
+  } 
   .piece.selected {
     background: rgba(100, 108, 255, 0.2);
     border: 2px solid #646cff;
