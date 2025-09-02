@@ -237,7 +237,6 @@ let wasEmpty = true;
   }
 
   function onReDrag(cell) {
-    if (!cell.pieceId) return;
 
     const pieceCells = cells.filter(c => c.pieceId === cell.pieceId);
 
@@ -299,7 +298,7 @@ let wasEmpty = true;
 </script>
 
 <!-- Puzzle board -->
-  <div class="game-container" style="">
+  <div class="game-container">
     <div class="board" style="grid-template-columns: repeat({width}, 30px);">
       {#each cells as cell}
         <!-- svelte-ignore a11y_interactive_supports_focus -->
@@ -316,10 +315,12 @@ let wasEmpty = true;
       </div>
     {/each}
   </div>
+  <div class="control-menu">
     <div style="text-align:center;color:white">
       Time: {Math.floor(seconds / 60)}:{(seconds % 60).toString().padStart(2, '0')}
     </div>
     <button style="color:white;background:red"on:click={() => resetPuzzle()}> Reset</button>
+  </div>
 </div>
 <hr />
 
@@ -469,6 +470,7 @@ let wasEmpty = true;
 
   .control-menu {
     min-width: 250px;
+    row-gap: 10px;
     padding: 20px;
     background: rgba(255, 255, 255, 0.05);
     border-radius: 12px;
